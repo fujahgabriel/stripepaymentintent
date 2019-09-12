@@ -189,12 +189,6 @@
         // on button click
         $("#cbutton").on('click', function(ev) {
             $(this).prop("disabled", true);
-            var fields = $(".wrap-input").find("input").serializeArray();
-            $.each(fields, function(i, field) {
-                if (!field.value)
-                    alert(field.name + ' is required');
-                $("#cbutton").removeAttr("disabled");
-            });
             $('#process').show();
             stripe.handleCardPayment(
                 clientSecret, card).then(function(result) {
