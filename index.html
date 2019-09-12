@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stripe Payment Intents Implementataion</title>
+    <meta name="keywords" content="sca,stripe,payment,paymentintent">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .StripeElement {
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 3px 0 #e6ebf1;
+            -webkit-transition: box-shadow 150ms ease;
+            transition: box-shadow 150ms ease;
+            width: 500px !important;
+            padding: 11px 15px 11px 0;
+        }
+        
+        .StripeElement--focus {
+            box-shadow: 0 1px 3px 0 #cfd7df;
+        }
+        
+        .StripeElement--invalid {
+            border-color: #fa755a;
+        }
+        
+        .StripeElement--webkit-autofill {
+            background-color: #fefde5 !important;
+        }
+        
+        .creditCardForm {
+            width: 100%;
+            background-color: #fff;
+            margin: 5px auto;
+            overflow: hidden;
+            padding: 5px;
+            color: #4c4e56;
+            height: auto;
+        }
+        
+        .creditCardForm label {
+            width: 100%;
+            margin-bottom: 5px;
+            font-size: 13px;
+            text-align: left;
+        }
+        
+        .creditCardForm h2 {
+            text-align: center;
+            font-family: "Open Sans", sans-serif;
+            color: #000;
+            font-size: 20px;
+        }
+        
+        .creditCardForm .payment {
+            float: left;
+            font-size: 18px;
+            padding: 5px;
+            margin-top: 10px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .creditCardForm .payment .btn {
+            width: 100%;
+            margin-top: 3px;
+            font-size: 18px;
+            background-color: #2ec4a5;
+            color: white;
+        }
+        
+        @media (max-width: 650px) {
+            .StripeElement {
+                width: 400px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Simple One-Time Stripe 3d PaymentIntents</h1>
+        <div class="col-md-12">
+            <p class="lead">Test out PaymentIntents with PHP</p>
+
+            <p>
+                To test 3d secure use the test card <strong>4000000000003063</strong>.
+            </p>
+            <div class="card">
+                <div class="card-body">
+
+
+                    <form class="form-horizontal" action="#ß" method="POST" id="payment-form">
+                        <div class="form-group">
+                            <!--<label for="name">Your Name *</label>
+
+                            <input class="input" class="form-control" type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Your Email *</label>
+
+                            <input class="input" class="form-control" type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="number">Your Phone Number *</label>
+
+                            <input class="input" class="form-control" type="tel" id="number" name="number" pattern="[0-9]{8}|[0-9]{10}|[0-9]{11}" required>
+                        </div>-->
+                            <div class="creditCardForm">
+                                <div class="form-group">
+                                    <strong>Amount</strong>
+                                    <h1 id="amount">£20.00</h1>
+                                </div>
+                            </div>
+                            <div class="creditCardForm ">
+                                <div class="payment col-md-12">
+
+                                    <div class="form-group">
+                                        <h2 class="text-left">Payment information </h2>
+
+                                        <hr>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="card-element">Credit or debit card</label>
+                                        <div id="card-element"></div>
+                                        <!-- Used to display form errors -->
+                                        <div id="card-errors"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" id="cbutton" data-disabled-text="Processing..." value="PROCEED TO PAYMENT" class="btn btn-primary">
+                                <div id="process" style="display:none;"><i class="fa fa-spinner" aria-hidden="true"></i> Processing....</div>
+                            </div>
+                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Stripe API Key
+            var stripe = Stripe('pk_test_b1cuYnOPGnXKc7x640TLmygl');
+            // clientSecret to complete payment
+            var clientSecret;
+            // paymentIntent id --- using to update
+            var paymentIntent;
+
+            var amount = 2000; //i.e 20GBP
+
+            // create initial payment intent, get client secret
+            $.getJSON("/stripepaymentintent/payment_intent.php", {
+                "amount": amount
+            }, function(data) {
+                clientSecret = data.client_secret;
+                paymentIntent = data.id;
+            });
+
+            // set up stripe.js
+            var elements = stripe.elements();
+            // Custom Styling
+            var style = {
+                base: {
+                    color: '#32325d',
+                    lineHeight: '24px',
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            };
+            // Create an instance of the card Element
+            var card = elements.create('card', {
+                hidePostalCode: true,
+                style: style
+            });
+            // Add an instance of the card Element into the `card-element` <div>
+            card.mount('#card-element');
+            // Handle real-time validation errors from the card Element.
+            card.addEventListener('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+            // on button click
+            $("#cbutton").on('click', function(ev) {
+                $(this).prop("disabled", true);
+                var fields = $(".wrap-input").find("input").serializeArray();
+                $.each(fields, function(i, field) {
+                    if (!field.value)
+                        alert(field.name + ' is required');
+                    $("#cbutton").removeAttr("disabled");
+                });
+                $('#process').show();
+                stripe.handleCardPayment(
+                    clientSecret, card).then(function(result) {
+                    if (result.error) {
+                        // Display error.message in your UI.
+                        $("#card-errors").text(result.error.message);
+                        // Re-enable button
+                        $('#process').hide();
+
+                        $("#cbutton").removeAttr("disabled");
+                        console.log(result.error);
+                    } else {
+                        $('#process').hide();
+
+                        alert('success');
+                        location.reload();
+                        // The payment has succeeded. Display a success message.
+                        //console.log(result);
+                    }
+                });
+            });
+        </script>
+</body>
+
+</html>
