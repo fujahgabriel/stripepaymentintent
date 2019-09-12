@@ -1,2 +1,2 @@
 # stripepaymentintent
-Stripe Payment Intent Implementation using simple PHP
+Stripe 3D Payment Intent Implementation using simple PHP and Javascript
