@@ -3,7 +3,7 @@
 require_once('stripe-php-master/init.php');
 
 // supply an API key
-\Stripe\Stripe::setApiKey("sk_test_pOwdIvUOTMVF0dNJqQunhHoA");
+\Stripe\Stripe::setApiKey("sk_test_xxxxxxxxxxxxxxxxx");
 
 // get amount
 $amount = $_REQUEST['amount'];
